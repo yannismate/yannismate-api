@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+  selenium-hub:
+    image: selenium/hub
+    ports:
+      - "4444:4444"
+    environment:
+      - SE_SESSION_REQUEST_TIMEOUT=30
+      - SE_NODE_SESSION_TIMEOUT=10
+  selenium-node:
+    image: selenium/node-chrome
+    shm_size: 1gb
+    depends_on:
+      - selenium-hub
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - SE_NODE_SESSION_TIMEOUT=10
+      - SE_NODE_MAX_SESSIONS=4
+    deploy:
+      mode: replicated
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+  db:
+    image: postgres:14.2
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - "./db/init:/docker-entrypoint-initdb.d"
+      # to persist data: - "./db/data:/var/lib/postgresql/data"
+  flyway:
+    image: flyway/flyway
+    command: "-configFiles=/flyway/conf/flyway.conf -locations=filesystem:/flyway/sql -connectRetries=60 migrate"
+    depends_on:
+      - db
+    volumes:
+      - "./db/migrations:/flyway/sql"
+      - "./db/flyway.conf:/flyway/conf/flyway.conf"

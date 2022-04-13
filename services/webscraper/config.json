@@ -1,0 +1,6 @@
+{
+  "selenium": {
+    "url": "http://localhost:4444/wd/hub",
+    "pageLoadTimeout": 10000
+  }
+}
