@@ -3,8 +3,6 @@ version: '3'
 services:
   selenium-hub:
     image: selenium/hub
-    ports:
-      - "4444:4444"
     environment:
       - SE_SESSION_REQUEST_TIMEOUT=30
       - SE_NODE_SESSION_TIMEOUT=10
@@ -39,3 +37,9 @@ services:
     volumes:
       - "./db/migrations:/flyway/sql"
       - "./db/flyway.conf:/flyway/conf/flyway.conf"
+  webscraper:
+    build:
+      context: ./
+      dockerfile: ./services/webscraper/Dockerfile
+    depends_on:
+      - selenium-hub
