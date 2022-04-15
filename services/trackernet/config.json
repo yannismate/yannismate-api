@@ -1,0 +1,10 @@
+{
+  "cache":  {
+    "redisUrl": "cache:6379",
+    "ttlSeconds": 300
+  },
+  "trackerNet": {
+    "baseUrl": "https://api.tracker.gg/api/v2/rocket-league/standard/profile"
+  },
+  "scraperUrl": "http://webscraper:8080/scrape"
+}

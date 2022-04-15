@@ -39,7 +39,7 @@ func scrapeHandler() http.Handler {
 			return
 		}
 
-		remote, err := selenium.NewRemote(selCaps, "http://localhost:4444/wd/hub")
+		remote, err := selenium.NewRemote(selCaps, configuration.Selenium.Url)
 		if err != nil {
 			log.WithField("event", "selenium_new_remote").Error(err)
 			rw.WriteHeader(500)

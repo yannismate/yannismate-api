@@ -29,6 +29,8 @@ services:
     volumes:
       - "./db/init:/docker-entrypoint-initdb.d"
       # to persist data: - "./db/data:/var/lib/postgresql/data"
+  cache:
+    image: redis
   flyway:
     image: flyway/flyway
     command: "-configFiles=/flyway/conf/flyway.conf -locations=filesystem:/flyway/sql -connectRetries=60 migrate"
@@ -43,3 +45,12 @@ services:
       dockerfile: ./services/webscraper/Dockerfile
     depends_on:
       - selenium-hub
+  trackernet:
+    build:
+      context: ./
+      dockerfile: ./services/trackernet/Dockerfile
+    depends_on:
+      - webscraper
+      - cache
+    ports:
+      - "8080:8080"
