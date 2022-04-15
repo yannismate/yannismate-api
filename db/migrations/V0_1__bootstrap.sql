@@ -15,5 +15,3 @@ create table if not exists users_api (
     primary key (user_id),
     unique (api_key)
 );
-
-insert into users_api (api_key, ratelimit_300) values ('test123', 3);

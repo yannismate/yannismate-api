@@ -6,7 +6,9 @@ import (
 	"github.com/yannismate/yannismate-api/libs/cache"
 	"github.com/yannismate/yannismate-api/libs/httplog"
 	"github.com/yannismate/yannismate-api/libs/ratelimit"
+	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 )
@@ -47,6 +49,7 @@ func withRateLimit(next http.Handler) http.Handler {
 		}
 		if apiKey == "" {
 			w.WriteHeader(403)
+			_, _ = w.Write([]byte("No api key specified"))
 			return
 		}
 
@@ -55,6 +58,7 @@ func withRateLimit(next http.Handler) http.Handler {
 
 			apiUser, err := apiDb.GetApiUserByKey(apiKey)
 			if err != nil {
+				_, _ = w.Write([]byte("Api key invalid"))
 				w.WriteHeader(403)
 				return
 			}
@@ -70,6 +74,7 @@ func withRateLimit(next http.Handler) http.Handler {
 		} else {
 			if limitRemaining < 0 {
 				w.WriteHeader(429)
+				_, _ = w.Write([]byte("Rate limit exceeded"))
 				return
 			}
 			w.Header().Set("RateLimit-Remaining", strconv.Itoa(limitRemaining))
@@ -78,9 +83,52 @@ func withRateLimit(next http.Handler) http.Handler {
 	})
 }
 
+var httpClient = http.Client{
+	Timeout: time.Second * 10,
+}
+
 func rankHandler() http.Handler {
 	fn := func(rw http.ResponseWriter, r *http.Request) {
-		rw.Write([]byte("hello"))
+		if r.URL.Query().Get("platform") == "" {
+			rw.WriteHeader(400)
+			_, _ = rw.Write([]byte("No platform specified"))
+			return
+		}
+		if r.URL.Query().Get("user") == "" {
+			rw.WriteHeader(400)
+			_, _ = rw.Write([]byte("No user specified"))
+			return
+		}
+
+		platform := url.QueryEscape(r.URL.Query().Get("platform"))
+		user := url.QueryEscape(r.URL.Query().Get("user"))
+
+		reqUrl := configuration.TrackerNetServiceUrl + "/rank?platform=" + platform + "&user=" + user
+
+		req, err := http.NewRequest("GET", reqUrl, nil)
+		if err != nil {
+			rw.WriteHeader(500)
+			log.WithField("event", "new_request_trackernet").Error(err)
+			return
+		}
+		req.Header.Set("User-Agent", "yannismate-api/services/trackernet")
+
+		res, err := httpClient.Do(req)
+		if err != nil {
+			rw.WriteHeader(500)
+			log.WithField("event", "do_request_trackernet").Error(err)
+			return
+		}
+		defer res.Body.Close()
+
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			rw.WriteHeader(500)
+			log.WithField("event", "read_body_trackernet").Error(err)
+			return
+		}
+
+		_, _ = rw.Write(body)
 	}
 	return http.HandlerFunc(fn)
 }

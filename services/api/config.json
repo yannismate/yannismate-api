@@ -1,4 +1,5 @@
 {
   "dbUri": "postgres://api:api@db:5432/yannismate_api",
-  "cacheUrl": "cache:6379"
+  "cacheUrl": "cache:6379",
+  "trackerNetServiceUrl": "http://trackernet"
 }

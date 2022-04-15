@@ -1,6 +1,7 @@
 package main
 
 type Configuration struct {
-	DbUri    string
-	CacheUrl string
+	DbUri                string
+	CacheUrl             string
+	TrackerNetServiceUrl string
 }
