@@ -1,4 +1,4 @@
-package main
+package cache
 
 import (
 	"context"
@@ -28,4 +28,8 @@ func (c *Cache) Get(key string) (string, error) {
 
 func (c *Cache) SetWithTtl(key string, value string, ttl time.Duration) error {
 	return c.redis.Set(c.ctx, key, value, ttl).Err()
+}
+
+func (c *Cache) SetKeepTtl(key string, value string) error {
+	return c.redis.Do(c.ctx, "set", key, value, "keepttl").Err()
 }

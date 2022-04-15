@@ -1,0 +1,6 @@
+{
+  "rateLimits": {
+    "joinsPer10": 20,
+    "messagesPer30": 20
+  }
+}

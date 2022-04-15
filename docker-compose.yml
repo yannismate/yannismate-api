@@ -52,5 +52,19 @@ services:
     depends_on:
       - webscraper
       - cache
+#  twitchbot:
+#    build:
+#      context: ./
+#      dockerfile: ./services/twitchbot/Dockerfile
+#    depends_on:
+#      - trackernet
+#      - cache
+  api:
+    build:
+      context: ./
+      dockerfile: ./services/api/Dockerfile
+    depends_on:
+      - trackernet
+      - cache
     ports:
       - "8080:8080"

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	log "github.com/sirupsen/logrus"
 	"github.com/tkanos/gonfig"
+	"github.com/yannismate/yannismate-api/libs/cache"
 	"github.com/yannismate/yannismate-api/libs/httplog"
 	"github.com/yannismate/yannismate-api/libs/rest/trackernet"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 )
 
 var configuration = Configuration{}
-var cache Cache
+var redisCache cache.Cache
 
 func main() {
 	err := gonfig.GetConf("config.json", &configuration)
@@ -21,7 +22,7 @@ func main() {
 		return
 	}
 
-	cache = NewCache(configuration.Cache.RedisUrl)
+	redisCache = cache.NewCache(configuration.Cache.RedisUrl)
 
 	http.Handle("/rank", httplog.WithLogging(rankHandler()))
 	err = http.ListenAndServe(":8080", nil)
@@ -47,9 +48,9 @@ func rankHandler() http.Handler {
 			return
 		}
 
-		cacheRes, err := cache.Get(platform + ":" + user)
+		cacheRes, err := redisCache.Get(platform + ":" + user)
 		if err == nil {
-			log.Debug("cache hit")
+			log.Debug("redisCache hit")
 			rw.Header().Set("Content-Type", "application/json")
 			rw.WriteHeader(200)
 			_, _ = rw.Write([]byte(cacheRes))
@@ -75,7 +76,7 @@ func rankHandler() http.Handler {
 			return
 		}
 
-		err = cache.SetWithTtl(platform+":"+user, string(jData), time.Second*time.Duration(configuration.Cache.TtlSeconds))
+		err = redisCache.SetWithTtl(platform+":"+user, string(jData), time.Second*time.Duration(configuration.Cache.TtlSeconds))
 		if err != nil {
 			log.WithField("event", "cache_set").Error(err)
 		}
