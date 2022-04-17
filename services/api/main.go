@@ -111,7 +111,7 @@ func rankHandler() http.Handler {
 			log.WithField("event", "new_request_trackernet").Error(err)
 			return
 		}
-		req.Header.Set("User-Agent", "yannismate-api/services/trackernet")
+		req.Header.Set("User-Agent", "yannismate-api/services/api")
 
 		res, err := httpClient.Do(req)
 		if err != nil {

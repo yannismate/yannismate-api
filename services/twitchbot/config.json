@@ -1,6 +1,5 @@
 {
-  "rateLimits": {
-    "joinsPer10": 20,
-    "messagesPer30": 20
-  }
+  "dbUri": "postgres://twitch_bot:twitch_bot@db:5432/yannismate_api",
+  "cacheUrl": "cache:6379",
+  "trackerNetServiceUrl": "http://trackernet:8080"
 }

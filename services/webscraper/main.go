@@ -46,11 +46,12 @@ func scrapeHandler() http.Handler {
 			return
 		}
 
+		defer remote.Quit()
+
 		err = remote.SetPageLoadTimeout(time.Millisecond * time.Duration(configuration.Selenium.PageLoadTimeout))
 		if err != nil {
 			log.WithField("event", "selenium_set_timeout").Error(err)
 			rw.WriteHeader(500)
-			_ = remote.Quit()
 			return
 		}
 
@@ -58,7 +59,6 @@ func scrapeHandler() http.Handler {
 		if err != nil {
 			log.WithField("event", "selenium_get").Error(err)
 			rw.WriteHeader(500)
-			_ = remote.Quit()
 			return
 		}
 
@@ -68,14 +68,12 @@ func scrapeHandler() http.Handler {
 			if err != nil {
 				log.WithField("event", "page_get_source").Error(err)
 				rw.WriteHeader(500)
-				_ = remote.Quit()
 				return
 			}
 			jData, err := json.Marshal(webscraper.GetScrapeResponse{Content: src})
 			if err != nil {
 				log.WithField("event", "json_encode").Error(err)
 				rw.WriteHeader(500)
-				_ = remote.Quit()
 				return
 			}
 
@@ -84,17 +82,13 @@ func scrapeHandler() http.Handler {
 			_, err = rw.Write(jData)
 			if err != nil {
 				log.WithField("event", "write_response").Error(err)
-				_ = remote.Quit()
-				return
 			}
-			_ = remote.Quit()
 			return
 		}
 		text, err := element.Text()
 		if err != nil {
 			log.WithField("event", "element_get_text").Error(err)
 			rw.WriteHeader(500)
-			_ = remote.Quit()
 			return
 		}
 
@@ -102,7 +96,6 @@ func scrapeHandler() http.Handler {
 		if err != nil {
 			log.WithField("event", "json_encode").Error(err)
 			rw.WriteHeader(500)
-			_ = remote.Quit()
 			return
 		}
 
@@ -112,7 +105,6 @@ func scrapeHandler() http.Handler {
 		if err != nil {
 			log.WithField("event", "write_response").Error(err)
 		}
-		_ = remote.Quit()
 	}
 	return http.HandlerFunc(fn)
 }

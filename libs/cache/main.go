@@ -33,3 +33,7 @@ func (c *Cache) SetWithTtl(key string, value string, ttl time.Duration) error {
 func (c *Cache) SetKeepTtl(key string, value string) error {
 	return c.redis.Do(c.ctx, "set", key, value, "keepttl").Err()
 }
+
+func (c *Cache) Delete(key string) {
+	c.redis.Del(c.ctx, key)
+}
