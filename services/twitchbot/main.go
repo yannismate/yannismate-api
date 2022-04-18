@@ -76,6 +76,8 @@ func handleMessage(message twitch.PrivateMessage, client *twitch.Client) {
 			joinChannelCommand(&message, client)
 		case "!leave":
 			leaveChannelCommand(&message, client)
+		case "!set":
+			setCommand(&message, client)
 		case "!setplatform":
 			setPlatformCommand(&message, client)
 		case "!setusername":
@@ -89,6 +91,8 @@ func handleMessage(message twitch.PrivateMessage, client *twitch.Client) {
 			switch strings.Split(msg, " ")[0] {
 			case "!leave":
 				leaveChannelCommand(&message, client)
+			case "!set":
+				setCommand(&message, client)
 			case "!setplatform":
 				setPlatformCommand(&message, client)
 			case "!setusername":
@@ -101,6 +105,8 @@ func handleMessage(message twitch.PrivateMessage, client *twitch.Client) {
 			if ok && isMod == "1" {
 				msg := strings.TrimPrefix(strings.ToLower(message.Message), "@"+strings.ToLower(configuration.TwitchUsername)+" ")
 				switch strings.Split(msg, " ")[0] {
+				case "!set":
+					setCommand(&message, client)
 				case "!setplatform":
 					setPlatformCommand(&message, client)
 				case "!setusername":
@@ -162,10 +168,55 @@ var validPlatforms = map[string]bool{
 	trackernet.Xbox:  true,
 }
 
+func setCommand(message *twitch.PrivateMessage, client *twitch.Client) {
+	log.WithField("event", "set_command").WithField("channel", message.Channel).Info("Executing set command")
+	cmdContentArr := strings.SplitN(message.Message, "!set ", 2)
+	if len(cmdContentArr) != 2 {
+		client.Say(message.Channel, "@"+message.User.Name+" Syntax: \"!set platform username\"")
+		return
+	}
+	cmdContent := cmdContentArr[1]
+
+	contentParts := strings.SplitN(cmdContent, " ", 2)
+	if len(contentParts) != 2 {
+		client.Say(message.Channel, "@"+message.User.Name+" Syntax: \"!set platform username\"")
+		return
+	}
+
+	newPlatform := contentParts[0]
+	newUsername := contentParts[1]
+
+	if !validPlatforms[newPlatform] {
+		client.Say(message.Channel, "@"+message.User.Name+" Valid platforms: epic, steam, ps, xbox")
+		return
+	}
+
+	var user string
+	if message.Channel == configuration.TwitchUsername {
+		user = message.User.Name
+	} else {
+		user = message.Channel
+	}
+
+	wasChanged, err := botDb.UpdateRlPlatformAndUsernameByTwitchLogin(user, newPlatform, newUsername)
+	if err != nil {
+		client.Say(message.Channel, "@"+message.User.Name+" There was an error updating your settings")
+		log.WithField("event", "set_command_db_update").Error(err)
+		return
+	}
+	if !wasChanged {
+		client.Say(message.Channel, "@"+message.User.Name+" The bot is not joined")
+		return
+	}
+	redisCache.Delete("twitch:" + message.Channel)
+	client.Say(message.Channel, "@"+message.User.Name+" Platform and username updated")
+}
+
 func setPlatformCommand(message *twitch.PrivateMessage, client *twitch.Client) {
 	log.WithField("event", "setplatform_command").WithField("channel", message.Channel).Info("Executing setplatform command")
 	cmdContent := strings.SplitN(message.Message, "!setplatform ", 2)
 	if len(cmdContent) != 2 {
+		client.Say(message.Channel, "@"+message.User.Name+" Syntax: \"!setplatform platform\"")
 		return
 	}
 	newPlatform := cmdContent[1]
@@ -200,6 +251,7 @@ func setUsernameCommand(message *twitch.PrivateMessage, client *twitch.Client) {
 	log.WithField("event", "setusername_command").WithField("channel", message.Channel).Info("Executing setusername command")
 	cmdContent := strings.SplitN(message.Message, "!setusername ", 2)
 	if len(cmdContent) != 2 {
+		client.Say(message.Channel, "@"+message.User.Name+" Syntax: \"!setusername username\"")
 		return
 	}
 	newUsername := cmdContent[1]
@@ -304,12 +356,17 @@ func checkForRankCommand(message *twitch.PrivateMessage, client *twitch.Client) 
 
 	if message.Message == "!"+dbUser.TwitchCommandName {
 
-		if dbUser.RlPlatform == "" {
+		platformMissing := dbUser.RlPlatform == ""
+		usernameMissing := dbUser.RlUsername == ""
+
+		if platformMissing && usernameMissing {
+			client.Say(message.Channel, "Please complete the setup with \"@"+configuration.TwitchUsername+" !set platform username\"")
+			return
+		} else if platformMissing {
 			client.Say(message.Channel, "Please set your platform with \"@"+configuration.TwitchUsername+" !setplatform platform\"")
 			return
-		}
-		if dbUser.RlUsername == "" {
-			client.Say(message.Channel, "Please set your username with \"@"+configuration.TwitchUsername+" !setusername platform\"")
+		} else if usernameMissing {
+			client.Say(message.Channel, "Please set your username with \"@"+configuration.TwitchUsername+" !setusername username\"")
 			return
 		}
 

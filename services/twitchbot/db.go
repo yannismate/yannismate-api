@@ -43,6 +43,11 @@ func (db *BotDb) GetBotUserByTwitchLogin(twitchLogin string) (*BotUser, error) {
 	return toBotUser(row)
 }
 
+func (db *BotDb) UpdateRlPlatformAndUsernameByTwitchLogin(twitchLogin string, rlPlatform string, rlUsername string) (bool, error) {
+	cmdTag, err := db.pool.Exec(db.ctx, `update users_twitch set rl_platform=$1, rl_username=$2 where twitch_login=$3;`, rlPlatform, rlUsername, twitchLogin)
+	return cmdTag.RowsAffected() > 0, err
+}
+
 func (db *BotDb) UpdateRlPlatformByTwitchLogin(twitchLogin string, rlPlatform string) (bool, error) {
 	cmdTag, err := db.pool.Exec(db.ctx, `update users_twitch set rl_platform=$1 where twitch_login=$2;`, rlPlatform, twitchLogin)
 	return cmdTag.RowsAffected() > 0, err
