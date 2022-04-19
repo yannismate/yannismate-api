@@ -84,6 +84,8 @@ func handleMessage(message twitch.PrivateMessage, client *twitch.Client) {
 			setUsernameCommand(&message, client)
 		case "!setformat":
 			setFormatCommand(&message, client)
+		case "!setcmd":
+			setCmdCommand(&message, client)
 		}
 	} else if strings.HasPrefix(strings.ToLower(message.Message), "@"+strings.ToLower(configuration.TwitchUsername)) {
 		if message.Channel == message.User.Name {
@@ -99,6 +101,8 @@ func handleMessage(message twitch.PrivateMessage, client *twitch.Client) {
 				setUsernameCommand(&message, client)
 			case "!setformat":
 				setFormatCommand(&message, client)
+			case "!setcmd":
+				setCmdCommand(&message, client)
 			}
 		} else {
 			isMod, ok := message.Tags["mod"]
@@ -113,6 +117,8 @@ func handleMessage(message twitch.PrivateMessage, client *twitch.Client) {
 					setUsernameCommand(&message, client)
 				case "!setformat":
 					setFormatCommand(&message, client)
+				case "!setcmd":
+					setCmdCommand(&message, client)
 				}
 			}
 		}
@@ -132,7 +138,7 @@ func joinChannelCommand(message *twitch.PrivateMessage, client *twitch.Client) {
 		TwitchUserId:      message.User.ID,
 		TwitchLogin:       message.User.Name,
 		TwitchCommandName: "rank",
-		RlMessageFormat:   "Ranked 1v1: $(1.r) Div $(1.d) ($(1.m)) | Ranked 2v2: $(2.r) Div $(2.d) ($(2.m)) | Ranked 3v3: $(3.r) Div $(3.d) ($(3.m)) | Tournament Matches: $(t.r) Div $(t.d) ($(t.m))",
+		RlMessageFormat:   configuration.DefaultFormat,
 	}
 	err = botDb.InsertBotUser(newUser)
 	if err != nil {
@@ -281,6 +287,7 @@ func setFormatCommand(message *twitch.PrivateMessage, client *twitch.Client) {
 	log.WithField("event", "setformat_command").WithField("channel", message.Channel).Info("Executing setformat command")
 	cmdContent := strings.SplitN(message.Message, "!setformat ", 2)
 	if len(cmdContent) != 2 {
+		client.Say(message.Channel, "@"+message.User.Name+" Syntax: \"!setformat username\"")
 		return
 	}
 	newFormat := cmdContent[1]
@@ -304,6 +311,39 @@ func setFormatCommand(message *twitch.PrivateMessage, client *twitch.Client) {
 	}
 	redisCache.Delete("twitch:" + message.Channel)
 	client.Say(message.Channel, "@"+message.User.Name+" Format updated")
+}
+
+func setCmdCommand(message *twitch.PrivateMessage, client *twitch.Client) {
+	log.WithField("event", "setcmd_command").WithField("channel", message.Channel).Info("Executing setcmd command")
+	cmdContent := strings.SplitN(message.Message, "!setcmd ", 2)
+	if len(cmdContent) != 2 {
+		client.Say(message.Channel, "@"+message.User.Name+" Syntax: \"!setcmd command\"")
+		return
+	}
+	newCmd := cmdContent[1]
+	if strings.HasPrefix(newCmd, "!") {
+		newCmd = strings.TrimPrefix(newCmd, "!")
+	}
+
+	var user string
+	if message.Channel == configuration.TwitchUsername {
+		user = message.User.Name
+	} else {
+		user = message.Channel
+	}
+
+	wasChanged, err := botDb.UpdateTwitchCommandNameByTwitchLogin(user, newCmd)
+	if err != nil {
+		client.Say(message.Channel, "@"+message.User.Name+" There was an error updating the command")
+		log.WithField("event", "setcmd_command_db_update").Error(err)
+		return
+	}
+	if !wasChanged {
+		client.Say(message.Channel, "@"+message.User.Name+" The bot is not joined")
+		return
+	}
+	redisCache.Delete("twitch:" + message.Channel)
+	client.Say(message.Channel, "@"+message.User.Name+" Command updated to !"+newCmd)
 }
 
 type CachedChannel struct {

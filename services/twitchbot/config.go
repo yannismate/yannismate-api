@@ -6,4 +6,5 @@ type Configuration struct {
 	DbUri                string `json:"dbUri"`
 	CacheUrl             string `json:"cacheUrl"`
 	TrackerNetServiceUrl string `json:"trackerNetServiceUrl"`
+	DefaultFormat        string `json:"defaultFormat"`
 }

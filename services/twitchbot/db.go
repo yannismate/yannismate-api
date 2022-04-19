@@ -63,6 +63,11 @@ func (db *BotDb) UpdateRlMsgFormatByTwitchLogin(twitchLogin string, format strin
 	return cmdTag.RowsAffected() > 0, err
 }
 
+func (db *BotDb) UpdateTwitchCommandNameByTwitchLogin(twitchLogin string, cmd string) (bool, error) {
+	cmdTag, err := db.pool.Exec(db.ctx, `update users_twitch set twitch_command_name=$1 where twitch_login=$2;`, cmd, twitchLogin)
+	return cmdTag.RowsAffected() > 0, err
+}
+
 func (db *BotDb) InsertBotUser(user BotUser) error {
 	_, err := db.pool.Exec(db.ctx, `insert into users_twitch (twitch_user_id, twitch_login, twitch_command_name, rl_platform, rl_username, rl_message_format)
 		values ($1, $2, $3, $4, $5, $6);`, user.TwitchUserId, user.TwitchLogin, user.TwitchCommandName, user.RlPlatform, user.RlUsername, user.RlMessageFormat)
