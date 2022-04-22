@@ -262,6 +262,11 @@ func setUsernameCommand(message *twitch.PrivateMessage, client *twitch.Client) {
 	}
 	newUsername := cmdContent[1]
 
+	if len(newUsername) > 255 {
+		client.Say(message.Channel, "@"+message.User.Name+" This username is too long.")
+		return
+	}
+
 	var user string
 	if message.Channel == configuration.TwitchUsername {
 		user = message.User.Name
@@ -325,6 +330,11 @@ func setCmdCommand(message *twitch.PrivateMessage, client *twitch.Client) {
 		newCmd = strings.TrimPrefix(newCmd, "!")
 	}
 
+	if len(newCmd) > 50 {
+		client.Say(message.Channel, "@"+message.User.Name+" This command is too long.")
+		return
+	}
+
 	var user string
 	if message.Channel == configuration.TwitchUsername {
 		user = message.User.Name
@@ -376,7 +386,7 @@ func checkForRankCommand(message *twitch.PrivateMessage, client *twitch.Client) 
 			client.Say(message.Channel, "There was an error getting the rank for player "+cachedObj.RlUsername+" on platform "+cachedObj.RlPlatform)
 			log.WithField("event", "user_command_get_rank_str").Error(err)
 		} else {
-			client.Say(message.Channel, replyStr)
+			client.Say(message.Channel, substr(replyStr, 0, 500))
 		}
 
 		cachedObj.LastExecuted = time.Now().Unix()
@@ -436,6 +446,20 @@ func checkForRankCommand(message *twitch.PrivateMessage, client *twitch.Client) 
 			return
 		}
 
-		client.Say(message.Channel, rankString)
+		client.Say(message.Channel, substr(rankString, 0, 500))
 	}
+}
+
+func substr(input string, start int, length int) string {
+	asRunes := []rune(input)
+
+	if start >= len(asRunes) {
+		return ""
+	}
+
+	if start+length > len(asRunes) {
+		length = len(asRunes) - start
+	}
+
+	return string(asRunes[start : start+length])
 }
