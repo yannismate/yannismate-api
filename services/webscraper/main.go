@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"github.com/tebeka/selenium"
 	"github.com/tkanos/gonfig"
@@ -21,6 +22,7 @@ func main() {
 		return
 	}
 
+	http.Handle("/metrics", promhttp.Handler())
 	http.Handle("/scrape", httplog.WithLogging(scrapeHandler()))
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {

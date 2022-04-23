@@ -3,10 +3,12 @@ package main
 import (
 	"encoding/json"
 	"github.com/gempir/go-twitch-irc/v3"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"github.com/tkanos/gonfig"
 	"github.com/yannismate/yannismate-api/libs/cache"
 	"github.com/yannismate/yannismate-api/libs/rest/trackernet"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -17,6 +19,17 @@ var botDb *BotDb
 var redisCache cache.Cache
 
 func main() {
+	metricsServer := http.NewServeMux()
+	metricsServer.Handle("/metrics", promhttp.Handler())
+	go func() {
+		err := http.ListenAndServe(":8081", metricsServer)
+		if err != nil {
+			log.WithField("event", "start_metrics_server").Fatal(err)
+		}
+	}()
+
+	log.WithField("event", "start_metrics_server").Info("Metrics server started")
+
 	log.Info("Starting twitchbot...")
 	err := gonfig.GetConf("config.json", &configuration)
 	if err != nil {
@@ -39,6 +52,7 @@ func main() {
 		go handleMessage(message, client)
 	})
 	client.Join(configuration.TwitchUsername)
+	metricChannelsJoined.Set(1)
 
 	client.OnConnect(func() {
 		log.WithField("event", "irc_connected").Info("IRC connected")
@@ -56,6 +70,7 @@ func main() {
 			if len(names) > 0 {
 				log.WithField("event", "channels_rejoin").Info("Joining " + strconv.Itoa(len(names)) + " channels")
 				client.Join(names...)
+				metricChannelsJoined.Add(float64(len(names)))
 			}
 
 			if newNamesCursor == nil || len(names) < 20 {
@@ -70,6 +85,7 @@ func main() {
 }
 
 func handleMessage(message twitch.PrivateMessage, client *twitch.Client) {
+	metricMessagesReceived.Inc()
 	if message.Channel == strings.ToLower(configuration.TwitchUsername) {
 		switch strings.Split(strings.ToLower(message.Message), " ")[0] {
 		case "!join":
@@ -147,6 +163,7 @@ func joinChannelCommand(message *twitch.PrivateMessage, client *twitch.Client) {
 		return
 	}
 	client.Join(message.User.Name)
+	metricChannelsJoined.Inc()
 	client.Say(message.Channel, "@"+message.User.Name+" The bot has now joined your channel!")
 }
 
@@ -162,6 +179,7 @@ func leaveChannelCommand(message *twitch.PrivateMessage, client *twitch.Client) 
 		redisCache.Delete("twitch:" + message.Channel)
 		client.Say(message.Channel, "@"+message.User.Name+" Leaving channel "+message.User.Name)
 		client.Depart(message.User.Name)
+		metricChannelsJoined.Dec()
 	} else {
 		client.Say(message.Channel, "@"+message.User.Name+" The bot was not joined to channel "+message.User.Name)
 	}
@@ -376,6 +394,8 @@ func checkForRankCommand(message *twitch.PrivateMessage, client *twitch.Client) 
 			return
 		}
 		log.WithField("event", "rank_command").WithField("channel", message.Channel).Info("Executing rank command")
+		metricRankCommandsExecuted.Inc()
+		metricRankCommandsCacheHits.Inc()
 
 		replyStr, err := GetRankString(cachedObj.RlPlatform, cachedObj.RlUsername, cachedObj.MessageFormat)
 		if err != nil {
@@ -421,6 +441,7 @@ func checkForRankCommand(message *twitch.PrivateMessage, client *twitch.Client) 
 		}
 
 		log.WithField("event", "rank_command").WithField("channel", message.Channel).Info("Executing rank command")
+		metricRankCommandsExecuted.Inc()
 
 		toCache := CachedChannel{
 			Command:       dbUser.TwitchCommandName,

@@ -1,0 +1,19 @@
+global:
+  scrape_interval:     10s
+  external_labels:
+    monitor: 'yannismate-api'
+
+# scrape configuration
+scrape_configs:
+  - job_name: 'api'
+    static_configs:
+      - targets: [ 'api:8081' ]
+  - job_name: 'trackernet'
+    static_configs:
+      - targets: [ 'trackernet:8080' ]
+  - job_name: 'twitchbot'
+    static_configs:
+      - targets: ['twitchbot:8081']
+  - job_name: 'webscraper'
+    static_configs:
+      - targets: ['webscraper:8080']

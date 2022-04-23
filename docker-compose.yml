@@ -73,3 +73,9 @@ services:
       - db
     ports:
       - "8080:8080"
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - "./prometheus/config.yml:/etc/prometheus/prometheus.yml"

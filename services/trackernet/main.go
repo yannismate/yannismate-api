@@ -2,7 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
+	metrics "github.com/slok/go-http-metrics/metrics/prometheus"
+	metricsMw "github.com/slok/go-http-metrics/middleware"
+	metricsMwStd "github.com/slok/go-http-metrics/middleware/std"
 	"github.com/tkanos/gonfig"
 	"github.com/yannismate/yannismate-api/libs/cache"
 	"github.com/yannismate/yannismate-api/libs/httplog"
@@ -24,7 +28,14 @@ func main() {
 
 	redisCache = cache.NewCache(configuration.Cache.RedisUrl)
 
-	http.Handle("/rank", httplog.WithLogging(rankHandler()))
+	mdlw := metricsMw.New(metricsMw.Config{
+		Recorder: metrics.NewRecorder(metrics.Config{
+			DurationBuckets: []float64{1, 2.5, 5, 10, 30, 60, 120, 300, 600},
+		}),
+	})
+
+	http.Handle("/metrics", promhttp.Handler())
+	http.Handle("/rank", metricsMwStd.Handler("rank", mdlw, httplog.WithLogging(rankHandler())))
 	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.WithField("event", "start_server").Fatal(err)
@@ -50,7 +61,6 @@ func rankHandler() http.Handler {
 
 		cacheRes, err := redisCache.Get(platform + ":" + user)
 		if err == nil {
-			log.Debug("redisCache hit")
 			rw.Header().Set("Content-Type", "application/json")
 			rw.WriteHeader(200)
 			_, _ = rw.Write([]byte(cacheRes))

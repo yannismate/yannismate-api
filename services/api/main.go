@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"github.com/tkanos/gonfig"
 	"github.com/yannismate/yannismate-api/libs/cache"
@@ -18,6 +19,15 @@ var ratelimiter ratelimit.SharedRateLimiter
 var apiDb *ApiDb
 
 func main() {
+	metricsServer := http.NewServeMux()
+	metricsServer.Handle("/metrics", promhttp.Handler())
+	go func() {
+		err := http.ListenAndServe(":8081", metricsServer)
+		if err != nil {
+			log.WithField("event", "start_metrics_server").Fatal(err)
+		}
+	}()
+
 	err := gonfig.GetConf("config.json", &configuration)
 	if err != nil {
 		log.WithField("event", "load_config").Fatal(err)
