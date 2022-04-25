@@ -56,28 +56,30 @@ func main() {
 
 	client.OnConnect(func() {
 		log.WithField("event", "irc_connected").Info("IRC connected")
-		namesCursor := ""
-		for {
-			names, newNamesCursor, err := botDb.GetUserNames(namesCursor, 20)
-			if newNamesCursor != nil {
-				namesCursor = *newNamesCursor
-			}
-			if err != nil {
-				log.WithField("event", "channels_rejoin").Fatal(err)
-				return
-			}
+		go func() {
+			namesCursor := ""
+			for {
+				names, newNamesCursor, err := botDb.GetUserNames(namesCursor, 20)
+				if newNamesCursor != nil {
+					namesCursor = *newNamesCursor
+				}
+				if err != nil {
+					log.WithField("event", "channels_rejoin").Fatal(err)
+					return
+				}
 
-			if len(names) > 0 {
-				log.WithField("event", "channels_rejoin").Info("Joining " + strconv.Itoa(len(names)) + " channels")
-				client.Join(names...)
-				metricChannelsJoined.Add(float64(len(names)))
-			}
+				if len(names) > 0 {
+					log.WithField("event", "channels_rejoin").Info("Joining " + strconv.Itoa(len(names)) + " channels")
+					client.Join(names...)
+					metricChannelsJoined.Add(float64(len(names)))
+				}
 
-			if newNamesCursor == nil || len(names) < 20 {
-				break
+				if newNamesCursor == nil || len(names) < 20 {
+					break
+				}
+				time.Sleep(time.Second * 15)
 			}
-			time.Sleep(time.Second * 10)
-		}
+		}()
 		client.Say(configuration.TwitchUsername, configuration.TwitchUsername+" online! MrDestructoid")
 	})
 
