@@ -176,7 +176,7 @@ func leaveChannelCommand(message *twitch.PrivateMessage, client *twitch.Client) 
 		return
 	}
 	if wasDeleted {
-		redisCache.Delete("twitch:" + message.Channel)
+		redisCache.Delete("twitch:" + message.User.Name)
 		client.Say(message.Channel, "@"+message.User.Name+" Leaving channel "+message.User.Name)
 		client.Depart(message.User.Name)
 		metricChannelsJoined.Dec()
@@ -232,7 +232,7 @@ func setCommand(message *twitch.PrivateMessage, client *twitch.Client) {
 		client.Say(message.Channel, "@"+message.User.Name+" The bot is not joined")
 		return
 	}
-	redisCache.Delete("twitch:" + message.Channel)
+	redisCache.Delete("twitch:" + user)
 	client.Say(message.Channel, "@"+message.User.Name+" Platform and username updated")
 }
 
@@ -267,7 +267,7 @@ func setPlatformCommand(message *twitch.PrivateMessage, client *twitch.Client) {
 		client.Say(message.Channel, "@"+message.User.Name+" The bot is not joined")
 		return
 	}
-	redisCache.Delete("twitch:" + message.Channel)
+	redisCache.Delete("twitch:" + user)
 	client.Say(message.Channel, "@"+message.User.Name+" Platform updated")
 }
 
@@ -302,7 +302,7 @@ func setUsernameCommand(message *twitch.PrivateMessage, client *twitch.Client) {
 		client.Say(message.Channel, "@"+message.User.Name+" The bot is not joined")
 		return
 	}
-	redisCache.Delete("twitch:" + message.Channel)
+	redisCache.Delete("twitch:" + user)
 	client.Say(message.Channel, "@"+message.User.Name+" Username updated")
 }
 
@@ -332,7 +332,7 @@ func setFormatCommand(message *twitch.PrivateMessage, client *twitch.Client) {
 		client.Say(message.Channel, "@"+message.User.Name+" The bot is not joined")
 		return
 	}
-	redisCache.Delete("twitch:" + message.Channel)
+	redisCache.Delete("twitch:" + user)
 	client.Say(message.Channel, "@"+message.User.Name+" Format updated")
 }
 
@@ -370,7 +370,7 @@ func setCmdCommand(message *twitch.PrivateMessage, client *twitch.Client) {
 		client.Say(message.Channel, "@"+message.User.Name+" The bot is not joined")
 		return
 	}
-	redisCache.Delete("twitch:" + message.Channel)
+	redisCache.Delete("twitch:" + user)
 	client.Say(message.Channel, "@"+message.User.Name+" Command updated to !"+newCmd)
 }
 
