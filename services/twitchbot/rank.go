@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 func GetRankString(platform string, user string, format string) (string, error) {
@@ -69,7 +70,12 @@ func formatRankResponse(response *trackernet.GetRankResponse, format string) str
 
 	var result strings.Builder
 
-	matches := tokenMatcher.FindAllStringIndex(format, -1)
+	matchesBytes := tokenMatcher.FindAllStringIndex(format, -1)
+
+	var matches [][]int
+	for _, x := range matchesBytes {
+		matches = append(matches, []int{utf8.RuneCountInString(format[:x[0]]), utf8.RuneCountInString(format[:x[1]])})
+	}
 
 	if len(matches) == 0 {
 		return format
