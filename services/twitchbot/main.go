@@ -312,7 +312,7 @@ func setFormatCommand(message *twitch.PrivateMessage, client *twitch.Client) {
 	log.WithField("event", "setformat_command").WithField("channel", message.Channel).Info("Executing setformat command")
 	cmdContent := strings.SplitN(message.Message, "!setformat ", 2)
 	if len(cmdContent) != 2 {
-		client.Say(message.Channel, "@"+message.User.Name+" Syntax: \"!setformat username\"")
+		client.Say(message.Channel, "@"+message.User.Name+" Syntax: \"!setformat format\"")
 		return
 	}
 	newFormat := cmdContent[1]
