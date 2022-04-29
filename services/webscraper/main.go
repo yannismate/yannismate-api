@@ -45,6 +45,7 @@ func scrapeHandler() http.Handler {
 		if err != nil {
 			log.WithField("event", "selenium_new_remote").Error(err)
 			rw.WriteHeader(500)
+			metricScrapeError.Inc()
 			return
 		}
 
@@ -54,6 +55,7 @@ func scrapeHandler() http.Handler {
 		if err != nil {
 			log.WithField("event", "selenium_set_timeout").Error(err)
 			rw.WriteHeader(500)
+			metricScrapeError.Inc()
 			return
 		}
 
@@ -61,6 +63,7 @@ func scrapeHandler() http.Handler {
 		if err != nil {
 			log.WithField("event", "selenium_get").Error(err)
 			rw.WriteHeader(500)
+			metricScrapeError.Inc()
 			return
 		}
 
@@ -70,17 +73,20 @@ func scrapeHandler() http.Handler {
 			if err != nil {
 				log.WithField("event", "page_get_source").Error(err)
 				rw.WriteHeader(500)
+				metricScrapeError.Inc()
 				return
 			}
 			jData, err := json.Marshal(webscraper.GetScrapeResponse{Content: src})
 			if err != nil {
 				log.WithField("event", "json_encode").Error(err)
 				rw.WriteHeader(500)
+				metricScrapeError.Inc()
 				return
 			}
 
 			rw.Header().Set("Content-Type", "application/json")
 			rw.WriteHeader(200)
+			metricScrapeSuccess.Inc()
 			_, err = rw.Write(jData)
 			if err != nil {
 				log.WithField("event", "write_response").Error(err)
@@ -91,6 +97,7 @@ func scrapeHandler() http.Handler {
 		if err != nil {
 			log.WithField("event", "element_get_text").Error(err)
 			rw.WriteHeader(500)
+			metricScrapeError.Inc()
 			return
 		}
 
@@ -98,11 +105,13 @@ func scrapeHandler() http.Handler {
 		if err != nil {
 			log.WithField("event", "json_encode").Error(err)
 			rw.WriteHeader(500)
+			metricScrapeError.Inc()
 			return
 		}
 
 		rw.Header().Set("Content-Type", "application/json")
 		rw.WriteHeader(200)
+		metricScrapeSuccess.Inc()
 		_, err = rw.Write(jData)
 		if err != nil {
 			log.WithField("event", "write_response").Error(err)
