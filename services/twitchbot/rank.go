@@ -5,6 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/yannismate/yannismate-api/libs/rest/trackernet"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -34,7 +35,7 @@ var httpClient = http.Client{
 
 func requestRank(platform string, user string) (*trackernet.GetRankResponse, error) {
 
-	reqUrl := configuration.TrackerNetServiceUrl + "/rank?platform=" + platform + "&user=" + user
+	reqUrl := configuration.TrackerNetServiceUrl + "/rank?platform=" + platform + "&user=" + url.QueryEscape(user)
 
 	req, err := http.NewRequest("GET", reqUrl, nil)
 	if err != nil {
