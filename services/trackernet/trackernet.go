@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -16,7 +17,7 @@ var httpClient = http.Client{
 
 func GetRanks(platform string, user string) (*trackernet.GetRankResponse, error) {
 
-	requestUrl := configuration.TrackerNet.BaseUrl + "/" + platform + "/" + url.QueryEscape(user)
+	requestUrl := configuration.TrackerNet.BaseUrl + "/" + platform + "/" + strings.Replace(url.QueryEscape(user), "+", "%20", -1)
 	req, err := http.NewRequest("GET", configuration.ScraperUrl+"?url="+url.QueryEscape(requestUrl), nil)
 	if err != nil {
 		return nil, err
