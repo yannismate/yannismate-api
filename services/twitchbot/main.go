@@ -409,7 +409,15 @@ func checkForRankCommand(message *twitch.PrivateMessage, client *twitch.Client) 
 			client.Say(message.Channel, "There was an error getting the rank for player "+cachedObj.RlUsername+" on platform "+cachedObj.RlPlatform)
 			log.WithField("event", "user_command_get_rank_str").Error(err)
 		} else {
-			client.Say(message.Channel, substr(replyStr, 0, 500))
+			replyStr = strings.Replace(replyStr, "$(user)", message.User.Name, -1)
+			if strings.HasPrefix(replyStr, "$(reply)") {
+				replyStr = strings.TrimPrefix(replyStr, "$(reply)")
+				replyStr = strings.TrimLeft(replyStr, "/ ")
+				client.Reply(message.Channel, message.ID, substr(replyStr, 0, 500))
+			} else {
+				replyStr = strings.TrimLeft(replyStr, "/ ")
+				client.Say(message.Channel, substr(replyStr, 0, 500))
+			}
 		}
 
 		cachedObj.LastExecuted = time.Now().Unix()
@@ -459,7 +467,7 @@ func checkForRankCommand(message *twitch.PrivateMessage, client *twitch.Client) 
 			log.WithField("event", "user_command_cache_set").Error(err)
 		}
 
-		rankString, err := GetRankString(dbUser.RlPlatform, dbUser.RlUsername, dbUser.RlMessageFormat)
+		replyStr, err := GetRankString(dbUser.RlPlatform, dbUser.RlUsername, dbUser.RlMessageFormat)
 		if err != nil {
 			if _, ok := err.(*PlayerNotFoundError); ok {
 				client.Say(message.Channel, "Player "+dbUser.RlUsername+" was not found on platform "+dbUser.RlPlatform)
@@ -470,7 +478,15 @@ func checkForRankCommand(message *twitch.PrivateMessage, client *twitch.Client) 
 			return
 		}
 
-		client.Say(message.Channel, substr(rankString, 0, 500))
+		replyStr = strings.Replace(replyStr, "$(user)", message.User.Name, -1)
+		if strings.HasPrefix(replyStr, "$(reply)") {
+			replyStr = strings.TrimPrefix(replyStr, "$(reply)")
+			replyStr = strings.TrimLeft(replyStr, "/ ")
+			client.Reply(message.Channel, message.ID, substr(replyStr, 0, 500))
+		} else {
+			replyStr = strings.TrimLeft(replyStr, "/ ")
+			client.Say(message.Channel, substr(replyStr, 0, 500))
+		}
 	}
 }
 

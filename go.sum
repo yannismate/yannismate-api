@@ -75,8 +75,8 @@ github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.m
 github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1mIlRU8Am5FuJP05cCM98=
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/fsnotify/fsnotify v1.4.9 h1:hsms1Qyu0jgnwNXIxa+/V/PDsU6CfLf6CNO8H7IWoS4=
-github.com/gempir/go-twitch-irc/v3 v3.0.0 h1:e34R+9BdKy+qrO/wN+FCt+BUtyn38gCnJuKWscIKbl4=
-github.com/gempir/go-twitch-irc/v3 v3.0.0/go.mod h1:/W9KZIiyizVecp4PEb7kc4AlIyXKiCmvlXrzlpPUytU=
+github.com/gempir/go-twitch-irc/v3 v3.1.0 h1:bUVZ5mADhH7KidJVcl+z79kgLJ7sjdAk4b/ylAvaLy0=
+github.com/gempir/go-twitch-irc/v3 v3.1.0/go.mod h1:/W9KZIiyizVecp4PEb7kc4AlIyXKiCmvlXrzlpPUytU=
 github.com/ghodss/yaml v1.0.0 h1:wQHKEahhL6wmXdzwWG11gIVCkOv05bNOh+Rxn0yngAk=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
 github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1/go.mod h1:vR7hzQXu2zJy9AVAgeJqvqgH9Q5CA+iKCZ2gyEVpxRU=

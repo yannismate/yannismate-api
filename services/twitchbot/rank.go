@@ -108,15 +108,7 @@ func formatRankResponse(response *trackernet.GetRankResponse, format string) str
 		}
 	}
 
-	resString := result.String()
-	for {
-		if !strings.HasPrefix(resString, "/") {
-			break
-		}
-		resString = strings.TrimPrefix(resString, "/")
-	}
-
-	return resString
+	return result.String()
 }
 
 var tokenExtractor = regexp.MustCompile("^([u123hrdst])\\.([rdm])\\.?([sml])?$")

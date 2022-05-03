@@ -3,7 +3,7 @@ module github.com/yannismate/yannismate-api
 go 1.18
 
 require (
-	github.com/gempir/go-twitch-irc/v3 v3.0.0
+	github.com/gempir/go-twitch-irc/v3 v3.1.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/jackc/pgx/v4 v4.15.0
 	github.com/prometheus/client_golang v1.12.1
