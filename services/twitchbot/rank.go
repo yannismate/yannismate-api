@@ -120,7 +120,7 @@ func evalToken(response *trackernet.GetRankResponse, token string) string {
 
 	matches := tokenExtractor.FindAllStringSubmatch(token, -1)
 	if len(matches) == 0 {
-		return "${" + string(token) + "}"
+		return "$(" + string(token) + ")"
 	}
 
 	playlist := playlistFromAbbr(matches[0][1])
@@ -147,7 +147,7 @@ func evalToken(response *trackernet.GetRankResponse, token string) string {
 		}
 	}
 
-	return "[err:" + token + "]"
+	return "[no_data:" + token + "]"
 }
 
 func playlistFromAbbr(abbr string) trackernet.Playlist {
