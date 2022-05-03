@@ -55,6 +55,7 @@ func main() {
 	metricChannelsJoined.Set(1)
 
 	client.OnConnect(func() {
+		metricChannelsJoined.Set(0)
 		log.WithField("event", "irc_connected").Info("IRC connected")
 		go func() {
 			namesCursor := ""
