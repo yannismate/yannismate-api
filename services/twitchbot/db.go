@@ -12,12 +12,13 @@ type BotDb struct {
 }
 
 type BotUser struct {
-	TwitchUserId      string
-	TwitchLogin       string
-	TwitchCommandName string
-	RlPlatform        string
-	RlUsername        string
-	RlMessageFormat   string
+	TwitchUserId          string
+	TwitchLogin           string
+	TwitchCommandName     string
+	TwitchCommandCooldown int
+	RlPlatform            string
+	RlUsername            string
+	RlMessageFormat       string
 }
 
 func NewBotDb(uri string) (*BotDb, error) {
@@ -32,14 +33,14 @@ func NewBotDb(uri string) (*BotDb, error) {
 }
 
 func (db *BotDb) GetBotUserByTwitchUserId(twitchUserId string) (*BotUser, error) {
-	row := db.pool.QueryRow(db.ctx, `select twitch_user_id, twitch_login, twitch_command_name, rl_platform, rl_username, 
-		rl_message_format from users_twitch where twitch_user_id=$1;`, twitchUserId)
+	row := db.pool.QueryRow(db.ctx, `select twitch_user_id, twitch_login, twitch_command_name, twitch_command_cooldown, 
+		rl_platform, rl_username, rl_message_format from users_twitch where twitch_user_id=$1;`, twitchUserId)
 	return toBotUser(row)
 }
 
 func (db *BotDb) GetBotUserByTwitchLogin(twitchLogin string) (*BotUser, error) {
-	row := db.pool.QueryRow(db.ctx, `select twitch_user_id, twitch_login, twitch_command_name, rl_platform, rl_username, rl_message_format 
-		from users_twitch where twitch_login=$1;`, twitchLogin)
+	row := db.pool.QueryRow(db.ctx, `select twitch_user_id, twitch_login, twitch_command_name, twitch_command_cooldown,
+		rl_platform, rl_username, rl_message_format from users_twitch where twitch_login=$1;`, twitchLogin)
 	return toBotUser(row)
 }
 
@@ -65,6 +66,11 @@ func (db *BotDb) UpdateRlMsgFormatByTwitchLogin(twitchLogin string, format strin
 
 func (db *BotDb) UpdateTwitchCommandNameByTwitchLogin(twitchLogin string, cmd string) (bool, error) {
 	cmdTag, err := db.pool.Exec(db.ctx, `update users_twitch set twitch_command_name=$1 where twitch_login=$2;`, cmd, twitchLogin)
+	return cmdTag.RowsAffected() > 0, err
+}
+
+func (db *BotDb) UpdateTwitchCommandCooldownByTwitchLogin(twitchLogin string, cooldown int) (bool, error) {
+	cmdTag, err := db.pool.Exec(db.ctx, `update users_twitch set twitch_command_cooldown=$1 where twitch_login=$2;`, cooldown, twitchLogin)
 	return cmdTag.RowsAffected() > 0, err
 }
 
@@ -105,7 +111,7 @@ func (db *BotDb) GetUserNames(userNameGt string, pageSize int) ([]string, *strin
 
 func toBotUser(row pgx.Row) (*BotUser, error) {
 	user := BotUser{}
-	err := row.Scan(&user.TwitchUserId, &user.TwitchLogin, &user.TwitchCommandName, &user.RlPlatform, &user.RlUsername, &user.RlMessageFormat)
+	err := row.Scan(&user.TwitchUserId, &user.TwitchLogin, &user.TwitchCommandName, &user.TwitchCommandCooldown, &user.RlPlatform, &user.RlUsername, &user.RlMessageFormat)
 	if err != nil {
 		return nil, err
 	}

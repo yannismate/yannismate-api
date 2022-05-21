@@ -105,6 +105,8 @@ func handleMessage(message twitch.PrivateMessage, client *twitch.Client) {
 			setFormatCommand(&message, client)
 		case "!setcmd":
 			setCmdCommand(&message, client)
+		case "!setcooldown":
+			setCooldownCommand(&message, client)
 		}
 	} else if strings.HasPrefix(strings.ToLower(message.Message), "@"+strings.ToLower(configuration.TwitchUsername)) {
 		if message.Channel == message.User.Name {
@@ -122,6 +124,8 @@ func handleMessage(message twitch.PrivateMessage, client *twitch.Client) {
 				setFormatCommand(&message, client)
 			case "!setcmd":
 				setCmdCommand(&message, client)
+			case "!setcooldown":
+				setCooldownCommand(&message, client)
 			}
 		} else {
 			isMod, ok := message.Tags["mod"]
@@ -138,6 +142,8 @@ func handleMessage(message twitch.PrivateMessage, client *twitch.Client) {
 					setFormatCommand(&message, client)
 				case "!setcmd":
 					setCmdCommand(&message, client)
+				case "!setcooldown":
+					setCooldownCommand(&message, client)
 				}
 			}
 		}
@@ -377,12 +383,47 @@ func setCmdCommand(message *twitch.PrivateMessage, client *twitch.Client) {
 	client.Say(message.Channel, "@"+message.User.Name+" Command updated to !"+newCmd)
 }
 
+func setCooldownCommand(message *twitch.PrivateMessage, client *twitch.Client) {
+	log.WithField("event", "setcooldown_command").WithField("channel", message.Channel).Info("Executing setcooldown command")
+	cmdContent := strings.SplitN(message.Message, "!setcooldown ", 2)
+	if len(cmdContent) != 2 {
+		client.Say(message.Channel, "@"+message.User.Name+" Syntax: \"!setcooldown seconds\"")
+		return
+	}
+	newCooldown, err := strconv.ParseInt(cmdContent[1], 10, 0)
+	if err != nil || newCooldown < 10 {
+		client.Say(message.Channel, "@"+message.User.Name+" The cooldown has to be a positive integer of at least 10.")
+		return
+	}
+
+	var user string
+	if message.Channel == configuration.TwitchUsername {
+		user = message.User.Name
+	} else {
+		user = message.Channel
+	}
+
+	wasChanged, err := botDb.UpdateTwitchCommandCooldownByTwitchLogin(user, int(newCooldown))
+	if err != nil {
+		client.Say(message.Channel, "@"+message.User.Name+" There was an error updating the cooldown")
+		log.WithField("event", "setcooldown_command_db_update").Error(err)
+		return
+	}
+	if !wasChanged {
+		client.Say(message.Channel, "@"+message.User.Name+" The bot is not joined")
+		return
+	}
+	redisCache.Delete("twitch:" + user)
+	client.Say(message.Channel, "@"+message.User.Name+" Cooldown updated to "+strconv.FormatInt(newCooldown, 10)+" seconds")
+}
+
 type CachedChannel struct {
-	Command       string `json:"cmd"`
-	LastExecuted  int64  `json:"last"`
-	RlPlatform    string `json:"rlp"`
-	RlUsername    string `json:"rlu"`
-	MessageFormat string `json:"fmt"`
+	Command         string `json:"cmd"`
+	LastExecuted    int64  `json:"last"`
+	CooldownSeconds int64  `json:"cd"`
+	RlPlatform      string `json:"rlp"`
+	RlUsername      string `json:"rlu"`
+	MessageFormat   string `json:"fmt"`
 }
 
 func checkForRankCommand(message *twitch.PrivateMessage, client *twitch.Client) {
@@ -393,7 +434,7 @@ func checkForRankCommand(message *twitch.PrivateMessage, client *twitch.Client) 
 		if err != nil {
 			return
 		}
-		if cachedObj.LastExecuted > time.Now().Unix()-10 || !strings.HasPrefix(message.Message, "!"+cachedObj.Command) {
+		if cachedObj.LastExecuted > time.Now().Unix()-cachedObj.CooldownSeconds || !strings.HasPrefix(message.Message, "!"+cachedObj.Command) {
 			return
 		}
 		log.WithField("event", "rank_command").WithField("channel", message.Channel).Info("Executing rank command")
@@ -455,11 +496,12 @@ func checkForRankCommand(message *twitch.PrivateMessage, client *twitch.Client) 
 		metricRankCommandsExecuted.Inc()
 
 		toCache := CachedChannel{
-			Command:       dbUser.TwitchCommandName,
-			LastExecuted:  time.Now().Unix(),
-			RlPlatform:    dbUser.RlPlatform,
-			RlUsername:    dbUser.RlUsername,
-			MessageFormat: dbUser.RlMessageFormat,
+			Command:         dbUser.TwitchCommandName,
+			LastExecuted:    time.Now().Unix(),
+			CooldownSeconds: int64(dbUser.TwitchCommandCooldown),
+			RlPlatform:      dbUser.RlPlatform,
+			RlUsername:      dbUser.RlUsername,
+			MessageFormat:   dbUser.RlMessageFormat,
 		}
 		toCacheStr, _ := json.Marshal(toCache)
 		err := redisCache.SetWithTtl("twitch:"+message.Channel, string(toCacheStr), time.Hour)
