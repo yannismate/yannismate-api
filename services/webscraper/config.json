@@ -1,6 +1,6 @@
 {
   "selenium": {
     "url": "http://selenium-hub:4444/wd/hub",
-    "pageLoadTimeout": 10000
+    "pageLoadTimeout": 20000
   }
 }

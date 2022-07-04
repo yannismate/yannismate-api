@@ -1,1 +1,0 @@
-alter table users_twitch alter column rl_message_format type varchar(500);

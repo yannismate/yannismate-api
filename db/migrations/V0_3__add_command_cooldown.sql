@@ -1,1 +1,0 @@
-alter table users_twitch add column twitch_command_cooldown integer default 10 not null;

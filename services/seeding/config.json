@@ -1,0 +1,6 @@
+{
+  "trackerNet": {
+    "baseUrl": "https://api.tracker.gg/api/v2/rocket-league/standard/profile/epic/$(name)/segments/playlist"
+  },
+  "scraperUrl": "http://127.0.0.1:8080/scrape"
+}

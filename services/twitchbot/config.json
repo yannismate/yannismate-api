@@ -1,6 +1,0 @@
-{
-  "dbUri": "postgres://twitch_bot:twitch_bot@db:5432/yannismate_api",
-  "cacheUrl": "cache:6379",
-  "trackerNetServiceUrl": "http://trackernet:8080",
-  "defaultFormat": "Ranked 1v1: $(1.r) Div $(1.d) ($(1.m)) | Ranked 2v2: $(2.r) Div $(2.d) ($(2.m)) | Ranked 3v3: $(3.r) Div $(3.d) ($(3.m))"
-}

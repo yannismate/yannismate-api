@@ -7,17 +7,18 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
 
 var httpClient = http.Client{
-	Timeout: time.Second * 10,
+	Timeout: time.Second * 20,
 }
 
-func GetRanks(platform string, user string) (*trackernet.GetRankResponse, error) {
+func GetRanks(user string, season int) (*trackernet.GetRankResponse, error) {
 
-	requestUrl := configuration.TrackerNet.BaseUrl + "/" + platform + "/" + strings.Replace(url.QueryEscape(user), "+", "%20", -1)
+	requestUrl := strings.Replace(configuration.TrackerNet.BaseUrl, "$(name)", strings.Replace(url.QueryEscape(user), "+", "%20", -1), -1) + "?season=" + strconv.Itoa(season)
 	req, err := http.NewRequest("GET", configuration.ScraperUrl+"?url="+url.QueryEscape(requestUrl), nil)
 	if err != nil {
 		return nil, err
@@ -53,7 +54,7 @@ func GetRanks(platform string, user string) (*trackernet.GetRankResponse, error)
 	}
 
 	rankings := make([]trackernet.Ranking, 0)
-	for _, s := range tggRes.Data.Segments {
+	for _, s := range tggRes.Data {
 		if s.Type == "playlist" {
 			ranking := s.toRanking()
 			if ranking != nil {
@@ -61,23 +62,13 @@ func GetRanks(platform string, user string) (*trackernet.GetRankResponse, error)
 			}
 		}
 	}
-	displayName := tggRes.Data.PlatformInfo.PlatformUserHandle
 
-	return &trackernet.GetRankResponse{DisplayName: displayName, Rankings: rankings}, nil
+	return &trackernet.GetRankResponse{Rankings: rankings}, nil
 }
 
 type TggResponse struct {
 	Errors []map[string]interface{} `json:"errors"`
-	Data   TggData                  `json:"data"`
-}
-
-type TggData struct {
-	PlatformInfo TggPlatformInfo `json:"platformInfo"`
-	Segments     []TggSegment    `json:"segments"`
-}
-
-type TggPlatformInfo struct {
-	PlatformUserHandle string `json:"platformUserHandle"`
+	Data   []TggSegment             `json:"data"`
 }
 
 type TggSegment struct {

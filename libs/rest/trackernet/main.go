@@ -1,8 +1,7 @@
 package trackernet
 
 type GetRankResponse struct {
-	DisplayName string    `json:"displayName"`
-	Rankings    []Ranking `json:"rankings"`
+	Rankings []Ranking `json:"rankings"`
 }
 
 type Ranking struct {
